@@ -1,14 +1,22 @@
 package com.shehan.atukorala;
 
 abstract class Expr {
-	public class Unary {
+	static class Unary extends Expr{
+
+		public Unary(Token operator2, Expr right) {
+			// TODO Auto-generated constructor stub
+		}
 
 		public Object operator;
 
 	}
 
-	public class Grouping {
-
+	static class Grouping extends Expr{
+		private Expr expr1;
+		
+		public Grouping(Expr expr1) {
+			this.expr1 = expr1;
+		}
 	}
 
 	public interface Visitor<T> {
@@ -17,8 +25,12 @@ abstract class Expr {
 		Object visitBinaryExpr(Binary expr);
 	}
 
-	public class Literal {
-
+	static class Literal extends Expr{
+		private Object boolean1;
+		
+		public Literal(Object boolean1) {
+			this.boolean1 = boolean1;
+		}
 	}
 
 	static class Binary extends Expr{
@@ -31,5 +43,11 @@ abstract class Expr {
 		final Expr left;
 		final Token operator;
 		final Expr right;
+	}
+	
+	static class Variable extends Expr{
+		public Variable(Token token) {
+			
+		}
 	}
 }

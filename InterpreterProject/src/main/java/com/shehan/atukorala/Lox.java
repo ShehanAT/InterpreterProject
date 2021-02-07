@@ -1,6 +1,6 @@
 package com.shehan.atukorala;
 
-import java.awt.List;
+import java.util.List;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -16,8 +16,17 @@ public class Lox {
 	 * Boolean         |   Boolean 
 	 * number          |   Double 
 	 * string          |   String 
+	 * 
+	 * 
+	 * Lox is an imperaive language, and mutation comes with the territory.
+	 * 
+	 * Lexical scope(or the less commonly head static scope) is a specific style of scoping where the text of the program itself shows where a 
+	 * scope begins and ends. In Lox, as in most modern languages, variables are lexically scoped. When you see an expression that 
+	 * uses some variable, you can figure out which variable declaration it refers to just by statically reading the code. 
 	 */
+	private static final Interpreter interpreter = new Interpreter();
 	static boolean hadError = false;
+	static boolean hadRuntimeError = false;
 	
 	public static void main(String[] args) throws IOException{
 		if(args.length > 1) {
@@ -34,6 +43,8 @@ public class Lox {
 		byte[] bytes = Files.readAllBytes(Paths.get(path));
 		run(new String(bytes, Charset.defaultCharset()));
 		
+//		if (hadError) System.exit(70);
+		if(hadRuntimeError) System.exit(70);
 	}
 	
 	private static void runPrompt() {
@@ -43,13 +54,12 @@ public class Lox {
 	private static void run(String source) {
 		// TODO Auto-generated method stub
 		Scanner scanner = new Scanner(source);
-//		List<Token> tokens = scanner.scanTokens();
+		List<Token> tokens = scanner.scanTokens();
 		Parser parser = new Parser(tokens);
-		Expr expression = parser.parse();
+		List<Stmt> statements = parser.parse();
 		
-		if(hadError) return;
-		
-		System.out.println(new AstPrinter().print(expression));
+//		if(hadError) return;
+		interpreter.interpret(statements);
 	}
 	
 	static void error(int line, String message) {
@@ -60,6 +70,12 @@ public class Lox {
 		System.err.println("[line " + line + "] Error" + where + ": " + message);
 		hadError = true;
 		if(hadError) System.exit(65);
+	}
+	
+	static void runtimeError(RuntimeError error) {
+		System.err.println(error.getMessage() + 
+				"\n[line " + error.token.line + "]");
+		hadRuntimeError = true;
 	}
 	
 	

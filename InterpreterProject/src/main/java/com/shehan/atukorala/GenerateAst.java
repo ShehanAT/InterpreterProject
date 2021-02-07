@@ -14,10 +14,19 @@ public class GenerateAst {
 		String outputDir = args[0];
 		
 		defineAst(outputDir, "Expr", Arrays.asList(
-				"Binary   : Expr left, Token operator, Expr right",
-				"Grouping : Expr expression",
-				"Literal  : Object value",
-				"Unary    : Token operator, Expr right"
+				"Assign		: Token name, Expr value",
+				"Binary 	: Expr left, Token operator, Expr right",
+				"Block      : List<Stmt> statements", // a block is a series of statements or declarations surrounded by curly braces. A block is itsefl a statment and can appear anywhere a statement is allowed
+				"Call       : Expr callee, Token paren, List<Expr> arguments",
+				"Get        : Expr object, Token name",
+				"Grouping   : Expr expression",
+				"Literal    : Object value",
+				"Logical    : Expr left, Token operator, Expr right",
+				"Set        : Expr object, Token name, Expr value",
+				"Super      : Token keyword, Token method",
+				"This       : Token keyword",
+				"Unary		: Token operator, Expr right",
+				"Variable   : Token name"
 				));
 	}
 	

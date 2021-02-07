@@ -1,10 +1,32 @@
 package com.shehan.atukorala;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import com.shehan.atukorala.Expr.Unary;
+
 import static com.shehan.atukorala.TokenType.*;
 
 
 public class Parser {
+	
+	/**
+	 * program -> statement * EOF;
+	 * statement -> exprStmt | printStmt;
+	 * 
+	 * exprStmt -> expression ";" ;
+	 * printStmt -> "print" expression ";" ;
+	 * 
+	 * expression -> assignment ;
+	 * assignment -> IDENTIFIER "=" assignment 
+	 * 				 | equality ;
+	 * 
+	 * statement -> exprStmt 
+	 * 				| printStmt
+	 * 				| block ;
+	 * block     -> "{" declaration* "}" ;
+	 */
+	
 	private final List<Token> tokens;
 	private int current = 0;
 	
@@ -39,11 +61,70 @@ public class Parser {
 	
 	
 	private Expr expression() {
-		return equality();
+		return assignment();
+	}
+	
+	private Expr assignment() {
+		Expr expr = equality();
+		
+		if(match(EQUAL)) {
+			Token equals = previous();
+			Expr value = assignment();
+			
+			if(expr instanceof Expr.Variable) {
+				Token name = ((Expr.Variable)expr).name;
+				return new Expr.Assign(name, value);
+			}
+			
+			error(equals, "Invalid assignment target.");
+		}
+		
+		return expr;
+	}
+	
+	private Stmt statement() {
+		if (match(PRINT)) return printStatement();
+		if (match(LEFT_BRACE)) return new Stmt.Block(block());
+		return expressionStatement();
+	}
+	
+	private Stmt printStatement() {
+		Expr value = expression();
+		consume(SEMICOLON, "Expect ';' after value");
+		return new Stmt.Print(value);
+	}
+	
+	private Stmt varDeclaration() {
+		Token name = consume(IDENTIFIER, "Expect variable name");
+		
+		Expr initializer = null;
+		if(match(EQUAL)) {
+			initializer = expression();
+		}
+		
+		consume(SEMICOLON, "Expect ';' after variable declaration");
+		return new Stmt.Var(name, intializer);
+	}
+	
+	private Stmt expressionStatement() {
+		Expr expr = expression();
+		consume(SEMICOLON, "Expect ';' after expression.");
+		return new Stmt.Expression(expr);
+	}
+	
+	private List<Stmt> block(){
+		List<Stmt> statements = new ArrayList<>();
+		
+		while(!check(RIGHT_BRACE) && !isAtEnd()) {
+			statements.add(declaration());
+		}
+		
+		consume(RIGHT_BRACE, "Expect '}' after block.");
+		return statements;
 	}
 	
 	private Expr equality() {
-		Expr expr = comparision();
+		Expr expr = comparison();
 		
 		while (match(BANG_EQUAL, EQUAL_EQUAL)) {
 			Token operator = previous();
@@ -79,11 +160,11 @@ public class Parser {
 	}
 	
 	private Expr factor() {
-		Expr expr = unary();;
+		Expr expr = unary();
 		
 		while(match(SLASH, STAR)) {
 			Token operator = previous();
-			Expr right = unary();
+			Expr.Unary right = (Unary) unary();
 			expr = new Expr.Binary(expr, operator, right);
 		}
 		
@@ -109,6 +190,10 @@ public class Parser {
 			return new Expr.Literal(previous().literal);
 		}
 		
+		if(match(IDENTIFIER)) {
+			return new Expr.Variable(previous());
+		}
+		
 		if(match(LEFT_PAREN)) {
 			Expr expr = expression();
 			consume(RIGHT_PAREN, "Expect ')' after expression");
@@ -119,12 +204,13 @@ public class Parser {
 		throw error(peek(), "Expect expression");
 	}
 	
-	Expr parse() {
-		try {
-			return expression();
-		}catch(ParseError error) {
-			return null;
+	List<Stmt> parse() {
+		List<Stmt> statement = new ArrayList<>();
+		while(!isAtEnd()) {
+			statements.add(statement());
 		}
+		
+		return statements;
 	}
 	
 	private Token consume(TokenType type, String message) {
