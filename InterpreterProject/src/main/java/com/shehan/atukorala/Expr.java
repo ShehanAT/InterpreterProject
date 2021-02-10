@@ -1,8 +1,14 @@
 package com.shehan.atukorala;
 
-abstract class Expr {
-	static class Unary extends Expr{
+import java.util.List;
 
+import com.shehan.atukorala.Stmt.Block;
+import com.shehan.atukorala.Stmt.If;
+
+abstract class Expr {
+	
+	static class Unary extends Expr{
+		Expr right;
 		public Unary(Token operator2, Expr right) {
 			// TODO Auto-generated constructor stub
 		}
@@ -34,6 +40,7 @@ abstract class Expr {
 
 	static class Grouping extends Expr{
 		private Expr expr1;
+		Expr expression;//static class variables are public by default
 		
 		public Grouping(Expr expr1) {
 			this.expr1 = expr1;
@@ -58,6 +65,8 @@ abstract class Expr {
 		T visitSuperExpr(Super expr);
 		T visitUnaryExpr(Unary expr);
 		T visitVariableExpr(Variable expr);
+		Void visitBlockStmt(Block stmt);
+		Void visitIfStmt(If stmt);
 		
 	}
 	
@@ -100,6 +109,8 @@ abstract class Expr {
 	
 	static class Call extends Expr{
 
+		Expr callee;
+		List<Expr> arguments;
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			// TODO Auto-generated method stub

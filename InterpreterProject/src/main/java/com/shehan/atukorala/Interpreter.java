@@ -5,6 +5,8 @@ import static com.shehan.atukorala.TokenType.*;
 import java.util.List;
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	private Environment environment = new Environment();
+	private final Map<Expr, Integer> locals = new HashMap<>();
+	
 	@Override 
 	public Object visitLiteralExpr(Expr.Literal expr) {
 		return expr.value;
@@ -25,6 +27,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		return null;
 	}
 	
+	public Void visitIfStmt(Stmt.If stmt) {
+		if(isTruthy(evaluate(stmt.condition))) {
+			execute(stmt.thenBranch);
+		}else if(stmt.elseBranch != null) {
+			execute(stmt.elseBranch);
+		}
+		
+		return null;
+	}
+	
 	@Override
 	public Void visitPrintStmt(Stmt.Print stmt) {
 		Object value = evaluate(stmt.expression);
@@ -40,6 +52,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		}
 		
 		environment.define(stmt.name.lexeme, value);
+		return null;
+	}
+	
+	@Override
+	@Override 
+	public Void visitBlockStmt(Stmt.Block stmt) {
+		executeBlock(stmt.statements, new Environment(environment));
 		return null;
 	}
 	
@@ -62,6 +81,25 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	
 	private void execute(Stmt stmt) {
 		stmt.accept(this);
+	}
+	
+	void executeBlock(List<Stmt> statements,
+						Environment environment) {
+		Environment previous = this.environment;
+		try {
+			this.environment = environment;
+			
+			for(Stmt statement : statements) {
+				execute(statement);
+			}
+		}finally {
+			this.environment = previous;
+		}
+		
+	}
+	
+	void resolve(Expr expr, int depth) {
+		locals.put(expr, depth);
 	}
 	
 	@Override 

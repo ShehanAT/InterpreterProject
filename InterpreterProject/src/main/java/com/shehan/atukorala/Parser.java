@@ -64,6 +64,17 @@ public class Parser {
 		return assignment();
 	}
 	
+	private Stmt declaration() {
+		try {
+			if(match(VAR)) return varDeclaration();
+			
+			return statement();
+		}catch(ParseError error) {
+			synchronize();
+			return null;
+		}
+	}
+	
 	private Expr assignment() {
 		Expr expr = equality();
 		
@@ -88,6 +99,20 @@ public class Parser {
 		return expressionStatement();
 	}
 	
+	private Stmt ifStatement() {
+		consume(LEFT_PAREN, "Expect '(' after 'if'.");
+		Expr condition = expression();
+		consume(RIGHT_PAREN, "Expect ')' after if condition");
+		
+		Stmt thenBranch = statement();
+		Stmt elseBranch = null;
+		if(match(ELSE)) {
+			elseBranch = statement();
+		}
+		
+		return new Stmt.If(condition, thenBranch, elseBranch);
+	}
+	
 	private Stmt printStatement() {
 		Expr value = expression();
 		consume(SEMICOLON, "Expect ';' after value");
@@ -103,7 +128,7 @@ public class Parser {
 		}
 		
 		consume(SEMICOLON, "Expect ';' after variable declaration");
-		return new Stmt.Var(name, intializer);
+		return new Stmt.Var(name, initializer);
 	}
 	
 	private Stmt expressionStatement() {
@@ -113,7 +138,7 @@ public class Parser {
 	}
 	
 	private List<Stmt> block(){
-		List<Stmt> statements = new ArrayList<>();
+		List<Stmt> statements = new ArrayList<Stmt>();
 		
 		while(!check(RIGHT_BRACE) && !isAtEnd()) {
 			statements.add(declaration());
