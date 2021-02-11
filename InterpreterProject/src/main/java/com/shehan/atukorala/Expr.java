@@ -89,7 +89,16 @@ abstract class Expr {
 	}
 	
 	static class Logical extends Expr{
-
+		final Expr expr;
+		final Token operator;
+		final Expr right;
+		
+		Logical(Expr expr, Token operator, Expr right){
+			this.expr = expr;
+			this.operator = operator;
+			this.right = right;
+		}
+		
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			// TODO Auto-generated method stub
