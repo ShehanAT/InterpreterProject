@@ -3,6 +3,7 @@ package com.shehan.atukorala;
 import java.util.List;
 
 import com.shehan.atukorala.Stmt.Block;
+import com.shehan.atukorala.Stmt.Class;
 import com.shehan.atukorala.Stmt.If;
 
 abstract class Expr {
@@ -67,6 +68,7 @@ abstract class Expr {
 		T visitVariableExpr(Variable expr);
 		Void visitBlockStmt(Block stmt);
 		Void visitIfStmt(If stmt);
+		Void visitClassStmt(Class stmt);
 		
 	}
 	
@@ -119,14 +121,23 @@ abstract class Expr {
 	static class Call extends Expr{
 
 		Expr callee;
+		Token paren;
 		List<Expr> arguments;
+		
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			// TODO Auto-generated method stub
 			return null;
 		}
 		
+		Call(Expr callee, Token token, List<Expr> arguments){
+			this.callee = callee;
+			this.paren = paren;
+			this.arguments = arguments;
+		}
+		
 	}
+	
 	static class Literal extends Expr{
 		private Object boolean1;
 		

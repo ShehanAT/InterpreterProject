@@ -2,10 +2,41 @@ package com.shehan.atukorala;
 
 import static com.shehan.atukorala.TokenType.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.shehan.atukorala.Expr.Call;
+import com.shehan.atukorala.Expr.Get;
+import com.shehan.atukorala.Expr.Logical;
+import com.shehan.atukorala.Expr.Set;
+import com.shehan.atukorala.Expr.Super;
+import com.shehan.atukorala.Stmt.Class;
+import com.shehan.atukorala.Stmt.Function;
+import com.shehan.atukorala.Stmt.Return;
+import com.shehan.atukorala.Stmt.While;
+
+
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	private Environment environment = new Environment();
-	private final Map<Expr, Integer> locals = new HashMap<>();
+	final Environment globals = new Environment();
+	private final Map<Expr, Integer> locals = new HashMap<Expr, Integer>();
+	
+	Interpreter(){
+		globals.define("clock", new LoxCallable() {
+			 
+			public int arity() { return 0; }
+			
+			// since these methods are implements and not extended from interface the @Override annotation is not required 
+			public Object call(Interpreter interpreter, List<Object> arguments) {
+				return (double)System.currentTimeMillis() / 1000.00;
+			}
+			
+			@Override 
+			public String toString() { return "<native fn>"; } 
+		});
+	}
 	
 	@Override 
 	public Object visitLiteralExpr(Expr.Literal expr) {
@@ -45,6 +76,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	}
 	
 	@Override 
+	public Void visitReturnStmt(Stmt.Return stmt) {
+		Object value = null;
+		if(stmt.value != null) value = evaluate(stmt.value);
+		
+		throw new Return(value);
+	}
+	
+	@Override 
 	public Void visitVarStmt(Stmt.Var stmt) {
 		Object value = null;
 		if(stmt.initializer != null) {
@@ -55,7 +94,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		return null;
 	}
 	
-	@Override
 	@Override 
 	public Void visitBlockStmt(Stmt.Block stmt) {
 		executeBlock(stmt.statements, new Environment(environment));
@@ -65,7 +103,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	@Override 
 	public Object visitAssignExpr(Expr.Assign expr) {
 		Object value = evalute(expr.value);
-		environment.assign(expr.name, value);
+
+		Integer distance = locals.get(expr);
+		if(distance != null) {
+			environment.assignAt(distance, expr.name, value);
+		}else {
+			globals.assign(expr.name, value);
+		}
 		return value;
 	}
 	
@@ -128,6 +172,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	@Override 
 	public Object visitVariableExpr(Expr.Variable expr) {
 		return environment.get(expr.name);
+	}
+	
+	private Object lookUpVariable(Token name, Expr expr) {
+		Integer distance = locals.get(expr);
+		if(distance != null) {
+			return environment.getAt(distance ,name.lexeme);
+		}else {
+			return globals.get(name);
+		}
 	}
 	
 	private boolean isTruthy(Object object) {
@@ -218,6 +271,70 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		}
 		
 		return object.toString();
+	}
+
+	public Void visitClassStmt(Class stmt) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Void visitFunctionStmt(Stmt.Function stmt) {
+		LoxFunction function = new LoxFunction(stmt, environment);
+		environment.define(stmt.name.lexeme, function);
+		return null;
+	}
+
+	public Void visitReturnStmt(Return stmt) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Void visitWhileStmt(While stmt) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object visitCallExpr(Call expr) {
+		Object callee = evaluate(expr.callee);
+		
+		List<Object> arguments = new ArrayList<Object>();
+		for(Expr argument : expr.arguments) {
+			arguments.add(evaluate(argument));
+		}
+		
+		if(!(callee instanceof LoxCallable)) {
+			throw new RuntimeError(expr.paren, 
+					"Can only call functions and classes.");
+		}
+		
+		LoxCallable function = (LoxCallable)callee;
+		if(arguments.size() != function.arity()) {
+			throw new RuntimeError(expr.paren, "Expected " + 
+				function.arity() + " arguments but got " + 
+				arguments.size() + ".");
+		}
+		
+		return function.call(this, arguments);
+	}
+
+	public Object visitGetExpr(Get expr) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object visitLogicalExpr(Logical expr) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object visitSetExpr(Set expr) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object visitSuperExpr(Super expr) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	

@@ -1,5 +1,7 @@
 package com.shehan.atukorala;
 
+import java.util.List;
+
 public class Stmt {
 	
  interface Visitor<T>{
@@ -16,18 +18,41 @@ public class Stmt {
  
  static class Block extends Stmt{
 	 Expr statements;
+	 List<Stmt> blocks;
+	 
+	 Block(List<Stmt> blocks){
+		 this.blocks = blocks;
+	 }
  }
  
  static class Class extends Stmt{
+	 Token name;
+	 List<Stmt.Function> methods;
 	 
+	 Class(Token name, List<Stmt.Function> methods){
+		 this.name = name;
+		 this.methods = methods;
+	 }
  }
  
  static class Expression extends Stmt{
+	 Expr increment;
 	 
+	 Expression(Expr increment){
+		 this.increment = increment;
+	 }
  }
  
  static class Function extends Stmt{
+	 Token name;
+	 List<Token> params;
+	 List<Stmt> body;
 	 
+	 Function(Token name, List<Token> params, List<Stmt> body){
+		 this.name = name;
+		 this.params = params;
+		 this.body = body;
+	 }
  }
  
  static class If extends Stmt{
@@ -53,6 +78,12 @@ public class Stmt {
  
  static class Return extends Stmt{
 	Expr value; 
+	Token keyword;
+	
+	Return(Token keyword, Expr value){
+		this.value = value;
+		this.keyword = keyword;
+	}
  }
  
  static class Var extends Stmt{
@@ -61,7 +92,17 @@ public class Stmt {
  
  static class While extends Stmt{
 	 Expr condition;
-	 Expr body;
+	 Stmt body;
+	 
+	 While(Expr condition, Stmt body){
+		 this.condition = condition;
+		 this.body = body;
+	 }
+	 
+ }
+ 
+ public void accept(Resolver resolver) {
+	 
  }
  
 }
