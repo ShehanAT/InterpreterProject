@@ -76,6 +76,14 @@ abstract class Expr {
 	}
 	
 	static class Super extends Expr{
+		Token keyword;
+		Token method;
+		
+		Super(Token keyword, Token method){
+			this.keyword = keyword;
+			this.method = method;
+		}
+		
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			// TODO Auto-generated method stub
