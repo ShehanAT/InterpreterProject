@@ -36,13 +36,27 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
 		this.interpreter = interpreter;
 	}
 
-	@Override 
 	public Void visitBlockStmt(Stmt.Block stmt) {
 		beginScope();
 		resolve(stmt.statements);
 		endScope();
 		return null;
 	}
+	
+	private enum FunctionType {
+		NONE,
+		FUNCTION,
+		INITIALIZER,
+		METHOD
+	}
+	
+	private enum ClassType {
+		NONE,
+		CLASS
+	}
+	
+	private ClassType currentClass = ClassType.NONE;
+
 	
 	void resolve(List<Stmt> statements) {
 		for(Stmt statement : statements) {
@@ -123,7 +137,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
 		return null;
 	}
 
-	public Void visitAssignExpr(Assign expr) {
+	public Void visitAssignExpr(Expr.Assign expr) {
 		resolve(expr.value);
 		resolveLocal(expr, expr.name);
 		return null;
@@ -140,7 +154,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
 	}
 
 	public Void visitGetExpr(Get expr) {
-		// TODO Auto-generated method stub
+		resolve(expr.object);
 		return null;
 	}
 
@@ -151,10 +165,21 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
 	}
 
 	public Void visitSetExpr(Set expr) {
-		// TODO Auto-generated method stub
+		resolve(expr.value);
+		resolve(expr.object);
 		return null;
 	}
 
+	public Void visitThisExpr(Expr.This expr) {
+		if(currentClass == ClassType.NONE) {
+			Lox.error(expr.keyword, 
+					"Can't use 'this' outside of a class");
+			return null;
+		}
+		resolveLocal(expr, expr.keyword);
+		return null;
+	}
+	
 	public Void visitSuperExpr(Super expr) {
 		// TODO Auto-generated method stub
 		return null;
@@ -167,12 +192,34 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
 	
 	 
 	public Void visitClassStmt(Stmt.Class stmt) {
+		ClassType enclosingClass = currentClass;
+		currentClass = ClassType.CLASS;
+		
 		declare(stmt.name);
 		define(stmt.name);
+		
+		if(stmt.superclass != null) {
+			resolve(stmt.superclass);
+		}
+		
+		beginScope();
+		scopes.peek().put("this", true);
+		
+		for(Stmt.Function method : stmt.methods) {
+			FunctionType declaration = FunctionType.METHOD;
+			if(method.name.lexeme.equals("init")) {
+				declaration = FunctionType.INITIALIZER;
+			}
+			
+			resolveFunction(method, declaration);
+		}
+		
+		endScope();
+		
+		currentClass = enclosingClass;
 		return null;
 	}
 
-	@Override 
 	public Void visitVarStmt(Stmt.Var stmt) {
 		declare(stmt.name);
 		if(stmt.initializer != null) {
@@ -182,7 +229,6 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
 		return null;
 	}
 	
-	@Override 
 	public Void visitVariableExpr(Expr.Variable expr) {
 		if(!scopes.isEmpty() &&
 			scopes.peek().get(expr.name.lexeme) == Boolean.FALSE) {
@@ -226,14 +272,14 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
 		}
 		
 		if(stmt.value != null) {
+			if(currentFunction == FunctionType.INITIALIZER) {
+				Lox.error(stmt.keyword, 
+						"Can't return a value from an initializer.");
+			}
+			
 			resolve(stmt.value);
 		}
 		
-		return null;
-	}
-
-	public Void visitVarStmt(Var stmt) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

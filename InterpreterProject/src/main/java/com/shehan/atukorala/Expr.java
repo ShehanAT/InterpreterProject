@@ -82,7 +82,13 @@ abstract class Expr {
 	}
 	
 	static class Set extends Expr{
-
+		Expr object;
+		Token name;
+		Expr value;
+		
+		Set(Expr object, Token name, Expr value){
+			
+		}
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			// TODO Auto-generated method stub
@@ -94,6 +100,7 @@ abstract class Expr {
 		final Expr expr;
 		final Token operator;
 		final Expr right;
+		final Expr left;
 		
 		Logical(Expr expr, Token operator, Expr right){
 			this.expr = expr;
@@ -109,7 +116,15 @@ abstract class Expr {
 	}
 	
 	static class Get extends Expr{
-
+		Expr expr; 
+		Token name;
+		Expr object;
+		
+		Get(Expr expr, Token name){
+			this.expr = expr;
+			this.name = name;
+		}
+		
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			// TODO Auto-generated method stub
@@ -170,6 +185,8 @@ abstract class Expr {
 	}
 	
 	static class Variable extends Expr{
+		Token name;
+		
 		public Variable(Token token) {
 			
 		}
@@ -179,6 +196,20 @@ abstract class Expr {
 			// TODO Auto-generated method stub
 			return null;
 		}
+	}
+	
+	static class This extends Expr{
+		Token keyword;
+		
+		This(Token keyword){
+			this.keyword = keyword;
+		}
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		
 	}
 	
 	abstract <R> R accept(Visitor<R> visitor);

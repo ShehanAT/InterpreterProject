@@ -19,8 +19,8 @@ import com.shehan.atukorala.Stmt.While;
 
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
-	private Environment environment = new Environment();
 	final Environment globals = new Environment();
+	private Environment environment = globals;
 	private final Map<Expr, Integer> locals = new HashMap<Expr, Integer>();
 	
 	Interpreter(){
@@ -38,12 +38,10 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		});
 	}
 	
-	@Override 
 	public Object visitLiteralExpr(Expr.Literal expr) {
 		return expr.value;
 	}
 	
-	@Override
 	public Object visitGroupingExpr(Expr.Grouping expr) {
 		return evaluate(expr.expression);
 	}
@@ -52,7 +50,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		return expr.accept(this);
 	}
 	
-	@Override 
 	public Void visitExpressionStmt(Stmt.Expression stmt) {
 		evaluate(stmt.expression);
 		return null;
@@ -68,14 +65,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		return null;
 	}
 	
-	@Override
 	public Void visitPrintStmt(Stmt.Print stmt) {
 		Object value = evaluate(stmt.expression);
 		System.out.println(stringify(value));
 		return null;
 	}
 	
-	@Override 
 	public Void visitReturnStmt(Stmt.Return stmt) {
 		Object value = null;
 		if(stmt.value != null) value = evaluate(stmt.value);
@@ -83,7 +78,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		throw new Return(value);
 	}
 	
-	@Override 
 	public Void visitVarStmt(Stmt.Var stmt) {
 		Object value = null;
 		if(stmt.initializer != null) {
@@ -94,15 +88,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		return null;
 	}
 	
-	@Override 
 	public Void visitBlockStmt(Stmt.Block stmt) {
 		executeBlock(stmt.statements, new Environment(environment));
 		return null;
 	}
 	
-	@Override 
 	public Object visitAssignExpr(Expr.Assign expr) {
-		Object value = evalute(expr.value);
+		Object value = evaluate(expr.value);
 
 		Integer distance = locals.get(expr);
 		if(distance != null) {
@@ -146,7 +138,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		locals.put(expr, depth);
 	}
 	
-	@Override 
 	public Object visitUnaryExpr(Expr.Unary expr) {
 		Object right = evaluate(expr.right);
 		
@@ -154,7 +145,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		case BANG:
 			return !isTruthy(right);
 		case MINUS:
-			return -(double)right;
+			return -(Double)right;
 		}
 		/**
 		 * In JavaScript, strings are truthy but empty strings are not. Arrays are truthy but empty array are... also truthy. The number 0 is falsey, but the string "0" is truthy.
@@ -169,9 +160,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		return null;
 	}
 	
-	@Override 
+	 
 	public Object visitVariableExpr(Expr.Variable expr) {
-		return environment.get(expr.name);
+		return lookUpVariable(expr.name, expr);
 	}
 	
 	private Object lookUpVariable(Token name, Expr expr) {
@@ -185,7 +176,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	
 	private boolean isTruthy(Object object) {
 		if(object == null) return false;
-		if(object instanceof Boolean) return (boolean)object;
+		if(object instanceof Boolean) return (Boolean)object;
 		return true;
 	}
 	
@@ -194,7 +185,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 		throw new RuntimeError(operator, "Operand must be a number");
 	}
 	
-	private void checkNumberOperand(Token operator, Object left, Object right) {
+	private void checkNumberOperands(Token operator, Object left, Object right) {
 		if(left instanceof Double && right instanceof Double) return;
 		throw new RuntimeError(operator, "Operands must be numbers");
 	}
@@ -209,18 +200,17 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	}
 	
 	
-	@Override 
 	public Object visitBinaryExpr(Expr.Binary expr) {
 		Object left = evaluate(expr.left);
 		Object right = evaluate(expr.right);
 		
 		switch(expr.operator.type) {
 		case MINUS: 
-			checkNumberOperand(expr.operator, right);
-			return (double)left - (double)right;
+			checkNumberOperands(expr.operator, left, right);
+			return (Double)left - (Double)right;
 		case PLUS:
 			if(left instanceof Double && right instanceof Double) {
-				return (double)left + (double)right;
+				return (Double)left + (Double)right;
 			}
 			
 			if(left instanceof String && right instanceof String) {
@@ -228,23 +218,23 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 			}
 			throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
 		case GREATER:
-			checkNumberOperand(expr.operator, left, right);
-			return (double)left > (double)right;
+			checkNumberOperands(expr.operator, left, right);
+			return (Double)left > (Double)right;
 		case GREATER_EQUAL:
-			checkNumberOperand(expr.operator, left, right);
-			return (double)left >= (double)right;
+			checkNumberOperands(expr.operator, left, right);
+			return (Double)left >= (Double)right;
 		case LESS:
-			checkNumberOperand(expr.operator, left, right);
-			return (double)left < (double)right;
+			checkNumberOperands(expr.operator, left, right);
+			return (Double)left < (Double)right;
 		case LESS_EQUAL:
-			checkNumberOperand(expr.operator, left, right);
-			return (double)left <= (double)right;
+			checkNumberOperands(expr.operator, left, right);
+			return (Double)left <= (Double)right;
 		case SLASH:
 			checkNumberOperands(expr.operator, left, right);
-			return (double)left / (double)right;
+			return (Double)left / (Double)right;
 		case STAR:
 			checkNumberOperands(expr.operator, left, right);
-			return (double)left * (double)right;
+			return (Double)left * (Double)right;
 		
 		}
 		
@@ -274,18 +264,36 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	}
 
 	public Void visitClassStmt(Class stmt) {
-		// TODO Auto-generated method stub
+		Object superclass = null;
+		if(stmt.superclass != null) {
+			superclass = evaluate(stmt.superclass);
+			if(!(superclass instanceof LoxClass)) {
+				throw new RuntimeError(stmt.superclass.name, 
+						"Superclass must be a class.");
+			}
+		}
+		environment.define(stmt.name.lexeme, null);
+		
+		if(stmt.superclass != null) {
+			environment = new Environment(environment);
+			environment.define("super", superclass);
+		}
+		
+		Map<String, LoxFunction> methods = new HashMap<String, LoxFunction>();
+		for(Stmt.Function method : stmt.methods) {
+			LoxFunction function = new LoxFunction(method, environment,
+					method.name.lexeme.equals("init"));
+			methods.put(method.name.lexeme, function);
+		}
+		
+		LoxClass klass = new LoxClass(stmt.name.lexeme, (LoxClass)superclass, methods);
+		environment.assign(stmt.name, klass);
 		return null;
 	}
 
 	public Void visitFunctionStmt(Stmt.Function stmt) {
-		LoxFunction function = new LoxFunction(stmt, environment);
+		LoxFunction function = new LoxFunction(stmt, environment, false);
 		environment.define(stmt.name.lexeme, function);
-		return null;
-	}
-
-	public Void visitReturnStmt(Return stmt) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -318,8 +326,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	}
 
 	public Object visitGetExpr(Get expr) {
-		// TODO Auto-generated method stub
-		return null;
+		Object object = evaluate(expr.object);
+		if(object instanceof LoxInstance) {
+			return ((LoxInstance) object).get(expr.name);
+		}
+		
+		throw new RuntimeError(expr.name, 
+				"Only instances have properties");
 	}
 
 	public Object visitLogicalExpr(Logical expr) {
@@ -328,8 +341,20 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 	}
 
 	public Object visitSetExpr(Set expr) {
-		// TODO Auto-generated method stub
-		return null;
+		Object object = evaluate(expr.object);
+		
+		if(!(object instanceof LoxInstance)) {
+			throw new RuntimeError(expr.name, 
+									"Only instances have fields.");
+		}
+		
+		Object value = evaluate(expr.value);
+		((LoxInstance)object).set(expr.name, value);
+		return value;
+	}
+	
+	public Object visitThisExpr(Expr.This expr) {
+		return lookUpVariable(expr.keyword, expr);
 	}
 
 	public Object visitSuperExpr(Super expr) {
