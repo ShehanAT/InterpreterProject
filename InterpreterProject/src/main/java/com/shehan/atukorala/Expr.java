@@ -10,11 +10,14 @@ abstract class Expr {
 	
 	static class Unary extends Expr{
 		Expr right;
-		public Unary(Token operator2, Expr right) {
-			// TODO Auto-generated constructor stub
+		Token operator;
+		
+		public Unary(Token operator, Expr right) {
+			this.right = right;
+			this.operator = operator;
 		}
 
-		public Object operator;
+		
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
@@ -97,15 +100,15 @@ abstract class Expr {
 	}
 	
 	static class Logical extends Expr{
-		final Expr expr;
+		final Expr left;
 		final Token operator;
 		final Expr right;
-		final Expr left;
 		
-		Logical(Expr expr, Token operator, Expr right){
-			this.expr = expr;
+		Logical(Expr left, Token operator, Expr right){
+			this.left = left;
 			this.operator = operator;
 			this.right = right;
+
 		}
 		
 		@Override
@@ -155,6 +158,7 @@ abstract class Expr {
 	
 	static class Literal extends Expr{
 		private Object boolean1;
+		Object value;
 		
 		public Literal(Object boolean1) {
 			this.boolean1 = boolean1;

@@ -158,7 +158,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void>{
 		return null;
 	}
 
-	public Void visitLogicalExpr(Logical expr) {
+	public Void visitLogicalExpr(Expr.Logical expr) {
 		resolve(expr.left);
 		resolve(expr.right);
 		return null;

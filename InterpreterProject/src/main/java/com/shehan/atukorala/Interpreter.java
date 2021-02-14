@@ -14,7 +14,7 @@ import com.shehan.atukorala.Expr.Set;
 import com.shehan.atukorala.Expr.Super;
 import com.shehan.atukorala.Stmt.Class;
 import com.shehan.atukorala.Stmt.Function;
-import com.shehan.atukorala.Stmt.Return;
+import com.shehan.atukorala.Return;
 import com.shehan.atukorala.Stmt.While;
 
 
